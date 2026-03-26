@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Job Application Dashboard</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <!-- ── Top Nav ── -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="hamburger" id="hamburgerBtn" aria-label="Menu">&#9776;</button>
+      <span class="app-title">Job Dashboard</span>
+    </div>
+    <div class="topbar-right">
+      <button class="notif-btn" id="notifBtn" aria-label="Notifications">
+        <span class="bell-icon">&#128276;</span>
+        <span class="notif-badge hidden" id="notifBadge">0</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ── Sidebar Nav ── -->
+  <nav class="sidebar" id="sidebar">
+    <ul class="nav-list">
+      <li><a href="#" class="nav-link active" data-tab="overview">Overview</a></li>
+      <li><a href="#" class="nav-link" data-tab="jobs">Jobs</a></li>
+      <li><a href="#" class="nav-link" data-tab="coffee">Coffee Chats</a></li>
+      <li><a href="#" class="nav-link" data-tab="email">Email Outreach</a></li>
+      <li><a href="#" class="nav-link" data-tab="resume">Resume Tailor</a></li>
+      <li><a href="#" class="nav-link" data-tab="setup">Job Setup</a></li>
+    </ul>
+  </nav>
+
+  <!-- ── Overlay (mobile) ── -->
+  <div class="overlay hidden" id="overlay"></div>
+
+  <!-- ── Notifications Panel ── -->
+  <div class="notif-panel hidden" id="notifPanel">
+    <div class="notif-header">
+      <span>Notifications</span>
+      <button class="btn-link" id="markAllReadBtn">Mark all read</button>
+    </div>
+    <div id="notifList" class="notif-list">
+      <p class="empty-state">No notifications yet.</p>
+    </div>
+  </div>
+
+  <!-- ── Main Content ── -->
+  <main class="main-content" id="mainContent">
+
+    <!-- OVERVIEW TAB -->
+    <section id="tab-overview" class="tab-section active">
+      <h2>Overview</h2>
+      <div class="stats-grid" id="statsGrid"></div>
+
+      <h3>Application Pipeline</h3>
+      <div class="pipeline" id="pipeline"></div>
+
+      <div class="followup-grid">
+        <div>
+          <h3>Coffee Chat Follow-ups Due</h3>
+          <div id="coffeeFollowups"></div>
+        </div>
+        <div>
+          <h3>Email Follow-ups Due</h3>
+          <div id="emailFollowups"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- JOBS TAB -->
+    <section id="tab-jobs" class="tab-section hidden">
+      <div class="section-header">
+        <h2>Jobs</h2>
+        <button class="btn btn-primary" id="addJobBtn">+ Add Job</button>
+      </div>
+
+      <!-- Search / Filter -->
+      <div class="filters">
+        <input type="text" class="input" id="jobSearch" placeholder="Search company or title..." />
+        <select class="input" id="jobStatusFilter">
+          <option value="">All Statuses</option>
+          <option value="to_apply">To Apply</option>
+          <option value="applied">Applied</option>
+          <option value="phone_screen">Phone Screen</option>
+          <option value="interview">Interview</option>
+          <option value="offer">Offer</option>
+          <option value="rejected">Rejected</option>
+        </select>
+      </div>
+
+      <!-- Pipeline columns -->
+      <div class="pipeline-columns" id="jobColumns"></div>
+
+      <!-- Job list -->
+      <div id="jobList" class="card-list"></div>
+    </section>
+
+    <!-- COFFEE CHATS TAB -->
+    <section id="tab-coffee" class="tab-section hidden">
+      <div class="section-header">
+        <h2>Coffee Chats</h2>
+        <button class="btn btn-primary" id="addCoffeeBtn">+ Add</button>
+      </div>
+      <div id="coffeeList" class="card-list"></div>
+    </section>
+
+    <!-- EMAIL OUTREACH TAB -->
+    <section id="tab-email" class="tab-section hidden">
+      <div class="section-header">
+        <h2>Email Outreach</h2>
+        <button class="btn btn-primary" id="addEmailBtn">+ Add</button>
+      </div>
+      <div id="emailList" class="card-list"></div>
+    </section>
+
+    <!-- RESUME TAB -->
+    <section id="tab-resume" class="tab-section hidden">
+      <h2>AI Resume Tailor</h2>
+      <div class="resume-layout">
+        <div class="resume-col">
+          <h3>Base Resume</h3>
+          <p class="hint">This is reused for every tailoring request. Keep it up to date.</p>
+          <textarea id="baseResumeText" class="textarea tall" placeholder="Paste your full resume here..."></textarea>
+          <button class="btn btn-primary" id="saveBaseResumeBtn">Save Base Resume</button>
+        </div>
+        <div class="resume-col">
+          <h3>Tailor to Job</h3>
+          <label class="label">Job Description</label>
+          <textarea id="jobDescText" class="textarea tall" placeholder="Paste the job description here..."></textarea>
+          <label class="label">Link to saved job (optional)</label>
+          <select class="input" id="tailorJobSelect"><option value="">— None —</option></select>
+          <button class="btn btn-primary" id="tailorBtn">Tailor with Claude AI</button>
+          <div id="tailorStatus" class="status-msg hidden"></div>
+        </div>
+        <div class="resume-col">
+          <h3>Tailored Result</h3>
+          <textarea id="tailoredResumeOut" class="textarea tall" placeholder="Tailored resume will appear here..." readonly></textarea>
+          <button class="btn btn-secondary" id="copyTailoredBtn">Copy to Clipboard</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- JOB SETUP TAB -->
+    <section id="tab-setup" class="tab-section hidden">
+      <h2>Job Setup</h2>
+      <div class="setup-tabs">
+        <button class="setup-tab-btn active" data-setup="questions">Application Questions</button>
+        <button class="setup-tab-btn" data-setup="passwords">Passwords</button>
+        <button class="setup-tab-btn" data-setup="notifications">Notifications</button>
+      </div>
+
+      <!-- Application Questions -->
+      <div id="setup-questions" class="setup-panel active">
+        <p class="hint">These answers are auto-filled during Workday applications. Fill them once.</p>
+        <div id="profileForm"></div>
+        <button class="btn btn-primary" id="saveProfileBtn">Save All Answers</button>
+      </div>
+
+      <!-- Passwords -->
+      <div id="setup-passwords" class="setup-panel hidden">
+        <p class="hint">Workday passwords are encrypted and stored locally. One entry per company.</p>
+        <div id="passwordList" class="card-list"></div>
+        <button class="btn btn-primary" id="addPasswordBtn">+ Add Company Password</button>
+      </div>
+
+      <!-- Notifications -->
+      <div id="setup-notifications" class="setup-panel hidden">
+        <div class="notif-header">
+          <span>All Notifications</span>
+          <button class="btn-link" id="markAllReadBtn2">Mark all read</button>
+        </div>
+        <div id="notifListFull" class="notif-list"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ═══════════════════ MODALS ═══════════════════ -->
+
+  <!-- Job Modal -->
+  <div class="modal hidden" id="jobModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="jobModalTitle">Add Job</h3>
+        <button class="modal-close" data-modal="jobModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="jobId" />
+        <div class="form-row">
+          <div class="form-group">
+            <label class="label">Company *</label>
+            <input type="text" class="input" id="jobCompany" />
+          </div>
+          <div class="form-group">
+            <label class="label">Job Title *</label>
+            <input type="text" class="input" id="jobTitle" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="label">Job URL</label>
+            <input type="url" class="input" id="jobUrl" />
+          </div>
+          <div class="form-group">
+            <label class="label">Workday URL</label>
+            <input type="url" class="input" id="jobWorkdayUrl" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="label">Status</label>
+            <select class="input" id="jobStatus">
+              <option value="to_apply">To Apply</option>
+              <option value="applied">Applied</option>
+              <option value="phone_screen">Phone Screen</option>
+              <option value="interview">Interview</option>
+              <option value="offer">Offer</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="label">Source</label>
+            <input type="text" class="input" id="jobSource" placeholder="LinkedIn, Indeed, etc." />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="label">Salary Range</label>
+            <input type="text" class="input" id="jobSalary" placeholder="e.g. $80k–$100k" />
+          </div>
+          <div class="form-group">
+            <label class="label">Location</label>
+            <input type="text" class="input" id="jobLocation" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="label">Notes</label>
+          <textarea class="textarea" id="jobNotes"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-modal="jobModal">Cancel</button>
+        <button class="btn btn-primary" id="saveJobBtn">Save</button>
+        <button class="btn btn-success hidden" id="applyJobBtn">Apply (Workday)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Automate Modal -->
+  <div class="modal hidden" id="automateModal">
+    <div class="modal-box modal-sm">
+      <div class="modal-header">
+        <h3>Workday Automation</h3>
+        <button class="modal-close" data-modal="automateModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="hint">Enter your Workday email and password for this company. Your stored company password will be used automatically if available.</p>
+        <div class="form-group">
+          <label class="label">Email</label>
+          <input type="email" class="input" id="automateEmail" />
+        </div>
+        <div class="form-group">
+          <label class="label">Password (leave blank to use stored)</label>
+          <input type="password" class="input" id="automatePassword" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-modal="automateModal">Cancel</button>
+        <button class="btn btn-primary" id="startAutomateBtn">Start Automation</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Coffee Chat Modal -->
+  <div class="modal hidden" id="coffeeModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="coffeeModalTitle">Add Coffee Chat</h3>
+        <button class="modal-close" data-modal="coffeeModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="coffeeId" />
+        <div class="form-row">
+          <div class="form-group">
+            <label class="label">Name *</label>
+            <input type="text" class="input" id="coffeeName" />
+          </div>
+          <div class="form-group">
+            <label class="label">Company *</label>
+            <input type="text" class="input" id="coffeeCompany" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="label">Role</label>
+            <input type="text" class="input" id="coffeeRole" />
+          </div>
+          <div class="form-group">
+            <label class="label">LinkedIn URL</label>
+            <input type="url" class="input" id="coffeeLinkedin" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="label">Status</label>
+            <select class="input" id="coffeeStatus">
+              <option value="to_reach_out">To Reach Out</option>
+              <option value="message_sent">Message Sent</option>
+              <option value="scheduled">Scheduled</option>
+              <option value="completed">Completed</option>
+              <option value="follow_up">Follow Up</option>
+              <option value="no_response">No Response</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="label">Follow-up Date</label>
+            <input type="date" class="input" id="coffeeFollowUpDate" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="label">Meeting Notes</label>
+          <textarea class="textarea" id="coffeeMeetingNotes"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="label">Next Action</label>
+          <textarea class="textarea short" id="coffeeNextAction"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-modal="coffeeModal">Cancel</button>
+        <button class="btn btn-primary" id="saveCoffeeBtn">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Email Outreach Modal -->
+  <div class="modal hidden" id="emailModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="emailModalTitle">Add Email Outreach</h3>
+        <button class="modal-close" data-modal="emailModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="emailId" />
+        <div class="form-row">
+          <div class="form-group">
+            <label class="label">Name *</label>
+            <input type="text" class="input" id="emailName" />
+          </div>
+          <div class="form-group">
+            <label class="label">Company *</label>
+            <input type="text" class="input" id="emailCompany" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="label">Role</label>
+            <input type="text" class="input" id="emailRole" />
+          </div>
+          <div class="form-group">
+            <label class="label">Email Address</label>
+            <input type="email" class="input" id="emailAddr" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="label">Status</label>
+            <select class="input" id="emailStatus">
+              <option value="to_send">To Send</option>
+              <option value="sent">Sent</option>
+              <option value="replied">Replied</option>
+              <option value="follow_up">Follow Up</option>
+              <option value="no_response">No Response</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="label">Follow-up Date</label>
+            <input type="date" class="input" id="emailFollowUpDate" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="label">Subject</label>
+          <input type="text" class="input" id="emailSubject" />
+        </div>
+        <div class="form-group">
+          <label class="label">Email Body</label>
+          <textarea class="textarea" id="emailBody"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-modal="emailModal">Cancel</button>
+        <button class="btn btn-primary" id="saveEmailBtn">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Password Modal -->
+  <div class="modal hidden" id="passwordModal">
+    <div class="modal-box modal-sm">
+      <div class="modal-header">
+        <h3 id="passwordModalTitle">Add Company Password</h3>
+        <button class="modal-close" data-modal="passwordModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="passwordId" />
+        <div class="form-group">
+          <label class="label">Company Name *</label>
+          <input type="text" class="input" id="passwordCompany" />
+        </div>
+        <div class="form-group">
+          <label class="label">Workday URL Pattern (optional)</label>
+          <input type="text" class="input" id="passwordUrlPattern" placeholder="e.g. google.wd5.myworkdayjobs.com" />
+        </div>
+        <div class="form-group">
+          <label class="label">Password *</label>
+          <input type="password" class="input" id="passwordValue" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-modal="passwordModal">Cancel</button>
+        <button class="btn btn-primary" id="savePasswordBtn">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
