@@ -272,7 +272,7 @@ function jobCard(j) {
 
   const applyBtn = j.url
     ? `<button class="btn-yellow" onclick="openAutomateModal(${j.id})" title="Auto-apply">
-         <span class="material-symbols-outlined" style="font-size:16px">play_circle</span> Apply
+         <svg class="icon-sm"><use href="#ic-play"/></svg> Apply
        </button>`
     : '';
 
@@ -285,25 +285,25 @@ function jobCard(j) {
         </div>
         <div class="job-card-actions">
           <button class="icon-btn" onclick="editJob(${j.id})" title="Edit">
-            <span class="material-symbols-outlined" style="font-size:18px">edit</span>
+            <svg class="icon-sm"><use href="#ic-edit"/></svg>
           </button>
           <button class="icon-btn danger" onclick="deleteJob(${j.id})" title="Delete">
-            <span class="material-symbols-outlined" style="font-size:18px">delete</span>
+            <svg class="icon-sm"><use href="#ic-delete"/></svg>
           </button>
         </div>
       </div>
       <div class="job-card-meta">
         ${statusChip(j.status)}
         ${j.source ? `<span class="chip chip-surface">${esc(j.source)}</span>` : ''}
-        ${j.url ? `<a href="${esc(j.url)}" target="_blank" style="font-size:.78rem;color:var(--md-primary)">
-            <span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle">open_in_new</span> Posting
+        ${j.url ? `<a href="${esc(j.url)}" target="_blank" style="font-size:.78rem;color:var(--md-primary);display:inline-flex;align-items:center;gap:3px">
+            <svg class="icon-xs"><use href="#ic-open"/></svg> Posting
           </a>` : ''}
       </div>
       ${roundBtns}
       <div class="job-card-footer">
         ${applyBtn}
-        ${j.has_description ? `<span class="chip chip-surface" style="font-size:.72rem">
-            <span class="material-symbols-outlined" style="font-size:13px">auto_awesome</span> Resume tailored
+        ${j.has_description ? `<span class="chip chip-surface" style="font-size:.72rem;display:inline-flex;align-items:center;gap:3px">
+            <svg class="icon-xs"><use href="#ic-ai"/></svg> Resume tailored
           </span>` : ''}
       </div>
     </div>`;
@@ -465,10 +465,10 @@ async function loadResume() {
       </div>
       <div class="tailored-actions">
         <button class="btn-tonal" onclick="viewResume(${r.id})">
-          <span class="material-symbols-outlined" style="font-size:16px">visibility</span> View
+          <svg class="icon-sm"><use href="#ic-view"/></svg> View
         </button>
         <button class="icon-btn danger" onclick="deleteResume(${r.id})" title="Delete">
-          <span class="material-symbols-outlined" style="font-size:18px">delete</span>
+          <svg class="icon-sm"><use href="#ic-delete"/></svg>
         </button>
       </div>
     </div>`).join('');
@@ -573,10 +573,10 @@ async function loadLoginCreds() {
       </div>
       <div class="cred-actions">
         <button class="icon-btn" onclick="editLoginCred(${c.id})" title="Edit">
-          <span class="material-symbols-outlined" style="font-size:18px">edit</span>
+          <svg class="icon-sm"><use href="#ic-edit"/></svg>
         </button>
         <button class="icon-btn danger" onclick="deleteLoginCred(${c.id})" title="Delete">
-          <span class="material-symbols-outlined" style="font-size:18px">delete</span>
+          <svg class="icon-sm"><use href="#ic-delete"/></svg>
         </button>
       </div>
     </div>`).join('');
@@ -649,10 +649,10 @@ async function loadAccountCreds() {
       </div>
       <div class="cred-actions">
         <button class="icon-btn" onclick="editAccountCred(${a.id})" title="Edit">
-          <span class="material-symbols-outlined" style="font-size:18px">edit</span>
+          <svg class="icon-sm"><use href="#ic-edit"/></svg>
         </button>
         <button class="icon-btn danger" onclick="deleteAccountCred(${a.id})" title="Delete">
-          <span class="material-symbols-outlined" style="font-size:18px">delete</span>
+          <svg class="icon-sm"><use href="#ic-delete"/></svg>
         </button>
       </div>
     </div>`).join('');
