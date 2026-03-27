@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Black outer ring -->
+  <circle cx="50" cy="50" r="50" fill="#111111"/>
+  <!-- Red iris -->
+  <circle cx="50" cy="50" r="45" fill="#CC2200"/>
+  <!-- Inner ring -->
+  <circle cx="50" cy="50" r="28" fill="none" stroke="#111111" stroke-width="2.5"/>
+  <!-- Pupil -->
+  <circle cx="50" cy="50" r="9" fill="#111111"/>
+  <!-- Tomoe 1 (top) -->
+  <g transform="rotate(0,50,50)">
+    <circle cx="50" cy="21" r="6" fill="#111111"/>
+    <path d="M50,21 C58,24 62,32 58,40 C56,36 53,32 50,28 Z" fill="#111111"/>
+  </g>
+  <!-- Tomoe 2 (bottom-right) -->
+  <g transform="rotate(120,50,50)">
+    <circle cx="50" cy="21" r="6" fill="#111111"/>
+    <path d="M50,21 C58,24 62,32 58,40 C56,36 53,32 50,28 Z" fill="#111111"/>
+  </g>
+  <!-- Tomoe 3 (bottom-left) -->
+  <g transform="rotate(240,50,50)">
+    <circle cx="50" cy="21" r="6" fill="#111111"/>
+    <path d="M50,21 C58,24 62,32 58,40 C56,36 53,32 50,28 Z" fill="#111111"/>
+  </g>
+</svg>

@@ -9,3 +9,6 @@ cffi>=1.16.0
 cryptography==42.0.8
 python-multipart==0.0.9
 pydantic==2.7.1
+httpx==0.27.0
+beautifulsoup4==4.12.3
+lxml==5.2.2
