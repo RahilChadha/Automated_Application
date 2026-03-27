@@ -41,7 +41,7 @@
   --nav-w:    256px;
   --topbar-h: 64px;
 
-  font-family: 'Roboto', system-ui, sans-serif;
+  font-family: system-ui, -apple-system, sans-serif;
   font-size: 15px;
 }
 
@@ -57,11 +57,10 @@ html, body {
 a { color: var(--md-primary); text-decoration: none; }
 .hidden { display: none !important; }
 
-/* ── Material Symbols ────────────────────────────────────────────────────── */
-.material-symbols-outlined {
-  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-  user-select: none; vertical-align: middle; line-height: 1;
-}
+/* ── SVG Icons ───────────────────────────────────────────────────────────── */
+.icon    { width:24px; height:24px; fill:currentColor; display:inline-block; vertical-align:middle; flex-shrink:0; }
+.icon-sm { width:18px; height:18px; fill:currentColor; display:inline-block; vertical-align:middle; flex-shrink:0; }
+.icon-xs { width:14px; height:14px; fill:currentColor; display:inline-block; vertical-align:middle; flex-shrink:0; }
 
 /* ══ NAVIGATION RAIL ═════════════════════════════════════════════════════════*/
 .nav-rail {
@@ -100,7 +99,7 @@ a { color: var(--md-primary); text-decoration: none; }
   color: var(--md-primary);
   font-weight: 700;
 }
-.nav-item .material-symbols-outlined { font-size: 22px; }
+.nav-item .icon { width: 22px; height: 22px; }
 
 .nav-bottom {
   padding: 12px 16px 20px;
@@ -114,7 +113,7 @@ a { color: var(--md-primary); text-decoration: none; }
   transition: background .15s;
 }
 .nav-notif-btn:hover { background: rgba(103,80,164,.08); }
-.nav-notif-btn::after { content: 'Notifications'; font-family: 'Roboto', sans-serif; }
+.nav-notif-btn::after { content: 'Notifications'; font-family: system-ui, sans-serif; }
 
 /* ══ NOTIFICATION BADGE ══════════════════════════════════════════════════════*/
 .notif-badge {
@@ -274,7 +273,7 @@ a { color: var(--md-primary); text-decoration: none; }
 }
 .field-textarea { resize: vertical; min-height: 80px; }
 .field-select { cursor: pointer; }
-.resume-textarea { min-height: 400px; font-family: 'Roboto Mono', monospace; font-size: .82rem; }
+.resume-textarea { min-height: 400px; font-family: 'Courier New', 'Consolas', monospace; font-size: .82rem; }
 
 .field-row { display: flex; gap: 12px; }
 .flex-1 { flex: 1; }

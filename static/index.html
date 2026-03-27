@@ -1,56 +1,60 @@
 <!DOCTYPE html>
-<html lang="en" style="background:#FFFBFE;color-scheme:light">
+<html lang="en">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <meta name="color-scheme" content="light"/>
   <title>AutoApply</title>
   <link rel="icon" type="image/svg+xml" href="/static/favicon.svg"/>
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=block" rel="stylesheet"/>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="/static/style.css"/>
-  <style>
-    /* Critical fallback — forces light theme even if external CSS is slow/blocked */
-    html, body { background: #FFFBFE !important; color: #1C1B1F !important; color-scheme: light; }
-  </style>
 </head>
 <body>
 
-<!-- ── Navigation Rail (sidebar) ── -->
+<!-- SVG icon sprite — no CDN, no external deps -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <symbol id="ic-dashboard"  viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></symbol>
+  <symbol id="ic-work"       viewBox="0 0 24 24"><path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/></symbol>
+  <symbol id="ic-description" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></symbol>
+  <symbol id="ic-settings"   viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.04.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></symbol>
+  <symbol id="ic-bell"       viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></symbol>
+  <symbol id="ic-add"        viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></symbol>
+  <symbol id="ic-edit"       viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></symbol>
+  <symbol id="ic-delete"     viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></symbol>
+  <symbol id="ic-close"      viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></symbol>
+  <symbol id="ic-search"     viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></symbol>
+  <symbol id="ic-menu"       viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></symbol>
+  <symbol id="ic-link"       viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></symbol>
+  <symbol id="ic-ai"         viewBox="0 0 24 24"><path d="M19 9l1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25L19 9zm-7.5.5L9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12l-5.5-2.5zM19 15l-1.25 2.75L15 19l2.75 1.25L19 23l1.25-2.75L23 19l-2.75-1.25L19 15z"/></symbol>
+  <symbol id="ic-view"       viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></symbol>
+  <symbol id="ic-copy"       viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></symbol>
+  <symbol id="ic-play"       viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></symbol>
+  <symbol id="ic-open"       viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></symbol>
+</svg>
+
+<!-- ── Navigation Sidebar ── -->
 <nav class="nav-rail" id="navRail">
   <div class="nav-brand">
-    <svg width="32" height="32" viewBox="0 0 100 100" style="border-radius:50%;flex-shrink:0" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="50" cy="50" r="50" fill="#111"/>
-    <circle cx="50" cy="50" r="45" fill="#CC2200"/>
-    <circle cx="50" cy="50" r="28" fill="none" stroke="#111" stroke-width="2.5"/>
-    <circle cx="50" cy="50" r="9" fill="#111"/>
-    <g transform="rotate(0,50,50)"><circle cx="50" cy="21" r="6" fill="#111"/><path d="M50,21 C58,24 62,32 58,40 C56,36 53,32 50,28 Z" fill="#111"/></g>
-    <g transform="rotate(120,50,50)"><circle cx="50" cy="21" r="6" fill="#111"/><path d="M50,21 C58,24 62,32 58,40 C56,36 53,32 50,28 Z" fill="#111"/></g>
-    <g transform="rotate(240,50,50)"><circle cx="50" cy="21" r="6" fill="#111"/><path d="M50,21 C58,24 62,32 58,40 C56,36 53,32 50,28 Z" fill="#111"/></g>
-  </svg>
+    <svg width="30" height="30" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="border-radius:50%;flex-shrink:0">
+      <circle cx="50" cy="50" r="50" fill="#111"/>
+      <circle cx="50" cy="50" r="45" fill="#CC2200"/>
+      <circle cx="50" cy="50" r="28" fill="none" stroke="#111" stroke-width="2.5"/>
+      <circle cx="50" cy="50" r="9" fill="#111"/>
+      <g transform="rotate(0,50,50)"><circle cx="50" cy="21" r="6" fill="#111"/><path d="M50,21 C58,24 62,32 58,40 C56,36 53,32 50,28 Z" fill="#111"/></g>
+      <g transform="rotate(120,50,50)"><circle cx="50" cy="21" r="6" fill="#111"/><path d="M50,21 C58,24 62,32 58,40 C56,36 53,32 50,28 Z" fill="#111"/></g>
+      <g transform="rotate(240,50,50)"><circle cx="50" cy="21" r="6" fill="#111"/><path d="M50,21 C58,24 62,32 58,40 C56,36 53,32 50,28 Z" fill="#111"/></g>
+    </svg>
     <span class="nav-brand-name">AutoApply</span>
   </div>
   <ul class="nav-items">
-    <li class="nav-item active" data-tab="overview">
-      <span class="material-symbols-outlined">dashboard</span>
-      <span class="nav-label">Overview</span>
-    </li>
-    <li class="nav-item" data-tab="jobs">
-      <span class="material-symbols-outlined">work</span>
-      <span class="nav-label">Jobs</span>
-    </li>
-    <li class="nav-item" data-tab="resume">
-      <span class="material-symbols-outlined">description</span>
-      <span class="nav-label">Resume</span>
-    </li>
-    <li class="nav-item" data-tab="setup">
-      <span class="material-symbols-outlined">settings</span>
-      <span class="nav-label">Job Setup</span>
-    </li>
+    <li class="nav-item active" data-tab="overview"><svg class="icon"><use href="#ic-dashboard"/></svg><span>Overview</span></li>
+    <li class="nav-item" data-tab="jobs"><svg class="icon"><use href="#ic-work"/></svg><span>Jobs</span></li>
+    <li class="nav-item" data-tab="resume"><svg class="icon"><use href="#ic-description"/></svg><span>Resume</span></li>
+    <li class="nav-item" data-tab="setup"><svg class="icon"><use href="#ic-settings"/></svg><span>Job Setup</span></li>
   </ul>
   <div class="nav-bottom">
     <button class="nav-notif-btn" id="notifBtn">
-      <span class="material-symbols-outlined">notifications</span>
+      <svg class="icon"><use href="#ic-bell"/></svg>
+      <span>Notifications</span>
       <span class="notif-badge hidden" id="notifBadge">0</span>
     </button>
   </div>
@@ -58,17 +62,15 @@
 
 <!-- ── Mobile Top Bar ── -->
 <header class="topbar" id="topbar">
-  <button class="hamburger" id="hamburgerBtn">
-    <span class="material-symbols-outlined">menu</span>
-  </button>
+  <button class="icon-btn" id="hamburgerBtn"><svg class="icon"><use href="#ic-menu"/></svg></button>
   <span class="topbar-title">AutoApply</span>
-  <button class="topbar-notif" id="notifBtnMobile">
-    <span class="material-symbols-outlined">notifications</span>
+  <button class="icon-btn" id="notifBtnMobile" style="position:relative">
+    <svg class="icon"><use href="#ic-bell"/></svg>
     <span class="notif-badge hidden" id="notifBadgeMobile">0</span>
   </button>
 </header>
 
-<!-- ── Scrim (mobile overlay) ── -->
+<!-- ── Scrim ── -->
 <div class="scrim hidden" id="scrim"></div>
 
 <!-- ── Notification Drawer ── -->
@@ -77,15 +79,13 @@
     <span class="notif-drawer-title">Notifications</span>
     <button class="btn-text" id="markAllReadBtn">Mark all read</button>
   </div>
-  <div id="notifList" class="notif-list">
-    <p class="empty-state">No notifications yet.</p>
-  </div>
+  <div id="notifList" class="notif-list"><p class="empty-state">No notifications yet.</p></div>
 </aside>
 
-<!-- ── Main Content ── -->
+<!-- ── Main ── -->
 <main class="main" id="main">
 
-  <!-- ══ OVERVIEW ══ -->
+  <!-- OVERVIEW -->
   <section id="tab-overview" class="tab active">
     <div class="page-header">
       <h1 class="page-title">Overview</h1>
@@ -93,24 +93,22 @@
     <div class="stats-row" id="statsRow"></div>
     <div class="pipeline-row" id="pipelineRow"></div>
     <div class="section-card" style="margin-top:24px">
-      <h2 class="section-title">Recent Activity</h2>
+      <h2 class="section-title" style="margin-bottom:16px">Recent Activity</h2>
       <div id="recentActivity"></div>
     </div>
   </section>
 
-  <!-- ══ JOBS ══ -->
+  <!-- JOBS -->
   <section id="tab-jobs" class="tab hidden">
     <div class="page-header">
       <h1 class="page-title">Jobs</h1>
-      <button class="btn-filled" id="addJobBtn">
-        <span class="material-symbols-outlined">add</span> Add Job
-      </button>
+      <button class="btn-filled" id="addJobBtn"><svg class="icon-sm"><use href="#ic-add"/></svg> Add Job</button>
     </div>
     <div class="search-bar">
-      <span class="material-symbols-outlined search-icon">search</span>
+      <svg class="search-icon icon-sm"><use href="#ic-search"/></svg>
       <input type="text" id="jobSearch" class="search-input" placeholder="Search company or title…"/>
     </div>
-    <div class="kanban" id="kanban">
+    <div class="kanban">
       <div class="kanban-col">
         <div class="kanban-col-header">
           <span class="kanban-col-title">To Apply</span>
@@ -128,44 +126,30 @@
     </div>
   </section>
 
-  <!-- ══ RESUME ══ -->
+  <!-- RESUME -->
   <section id="tab-resume" class="tab hidden">
     <div class="page-header">
       <h1 class="page-title">Resume</h1>
     </div>
-
-    <!-- Base Resume -->
     <div class="section-card">
       <div class="section-card-header">
         <h2 class="section-title">Base Resume</h2>
-        <button class="btn-tonal" id="editBaseResumeBtn">
-          <span class="material-symbols-outlined">edit</span> Edit
-        </button>
+        <button class="btn-tonal" id="editBaseResumeBtn"><svg class="icon-sm"><use href="#ic-edit"/></svg> Edit</button>
       </div>
-      <div id="baseResumePreview" class="resume-preview">
-        <p class="empty-state">No base resume saved yet. Click Edit to add yours.</p>
-      </div>
+      <div id="baseResumePreview" class="resume-preview"><p class="empty-state">No base resume saved. Click Edit to add yours.</p></div>
     </div>
-
-    <!-- Tailored Resumes -->
     <div class="section-card" style="margin-top:20px">
       <div class="section-card-header">
         <h2 class="section-title">Tailored Resumes</h2>
-        <button class="btn-tonal" id="manualTailorBtn">
-          <span class="material-symbols-outlined">auto_awesome</span> Tailor Manually
-        </button>
+        <button class="btn-tonal" id="manualTailorBtn"><svg class="icon-sm"><use href="#ic-ai"/></svg> Tailor Manually</button>
       </div>
-      <div id="tailoredList">
-        <p class="empty-state">Tailored resumes will appear here automatically when you add jobs.</p>
-      </div>
+      <div id="tailoredList"><p class="empty-state">Tailored resumes appear here automatically when you add a job.</p></div>
     </div>
   </section>
 
-  <!-- ══ JOB SETUP ══ -->
+  <!-- JOB SETUP -->
   <section id="tab-setup" class="tab hidden">
-    <div class="page-header">
-      <h1 class="page-title">Job Setup</h1>
-    </div>
+    <div class="page-header"><h1 class="page-title">Job Setup</h1></div>
     <div class="setup-tabs">
       <button class="setup-tab active" data-setup="passwords">Passwords</button>
       <button class="setup-tab" data-setup="questions">Application Questions</button>
@@ -177,33 +161,27 @@
       <div class="section-card">
         <div class="section-card-header">
           <h2 class="section-title">Login Credentials</h2>
-          <button class="btn-filled" id="addLoginCredBtn">
-            <span class="material-symbols-outlined">add</span> Add
-          </button>
+          <button class="btn-filled" id="addLoginCredBtn"><svg class="icon-sm"><use href="#ic-add"/></svg> Add</button>
         </div>
-        <p class="hint-text">Emails and passwords tried in order when logging in to Workday. Priority 0 = tried first.</p>
-        <div id="loginCredList"></div>
+        <p class="hint-text">Email + passwords tried in order when logging into Workday. Lower priority = tried first.</p>
+        <div id="loginCredList" style="margin-top:14px"></div>
       </div>
       <div class="section-card" style="margin-top:20px">
         <div class="section-card-header">
           <h2 class="section-title">Account Setup Credentials</h2>
-          <button class="btn-filled" id="addAccountCredBtn">
-            <span class="material-symbols-outlined">add</span> Add
-          </button>
+          <button class="btn-filled" id="addAccountCredBtn"><svg class="icon-sm"><use href="#ic-add"/></svg> Add</button>
         </div>
-        <p class="hint-text">Email and password used when creating a new Workday account.</p>
-        <div id="accountCredList"></div>
+        <p class="hint-text">Email + password used to create a new Workday account when none exists.</p>
+        <div id="accountCredList" style="margin-top:14px"></div>
       </div>
     </div>
 
     <!-- Application Questions -->
     <div id="setup-questions" class="setup-panel hidden">
       <div class="section-card">
-        <p class="hint-text" style="margin-bottom:20px">These answers are auto-filled during Workday applications.</p>
+        <p class="hint-text" style="margin-bottom:20px">Fill these once — auto-used during Workday applications.</p>
         <div id="profileForm"></div>
-        <div style="margin-top:20px">
-          <button class="btn-filled" id="saveProfileBtn">Save All Answers</button>
-        </div>
+        <button class="btn-filled" id="saveProfileBtn" style="margin-top:20px">Save All Answers</button>
       </div>
     </div>
 
@@ -221,51 +199,44 @@
 
 </main>
 
-<!-- ══════════════════ MODALS ══════════════════ -->
+<!-- ══ MODALS ══ -->
 
-<!-- Add / Edit Job Modal -->
+<!-- Add / Edit Job -->
 <div class="modal hidden" id="jobModal">
   <div class="modal-surface">
     <div class="modal-header">
       <h2 class="modal-title" id="jobModalTitle">Add Job</h2>
-      <button class="icon-btn modal-close" data-modal="jobModal">
-        <span class="material-symbols-outlined">close</span>
-      </button>
+      <button class="icon-btn" data-modal="jobModal"><svg class="icon"><use href="#ic-close"/></svg></button>
     </div>
     <div class="modal-body">
       <input type="hidden" id="jobId"/>
-
-      <!-- URL row with Fetch -->
       <div class="field-row">
-        <div class="text-field flex-1">
+        <div class="text-field" style="flex:1">
           <label class="field-label">Job Posting URL</label>
           <input type="url" class="field-input" id="jobUrl" placeholder="Paste any job posting link…"/>
         </div>
-        <button class="btn-tonal" id="fetchJobBtn" style="align-self:flex-end">
-          <span class="material-symbols-outlined">link</span> Fetch
+        <button class="btn-tonal" id="fetchJobBtn" style="align-self:flex-end;white-space:nowrap">
+          <svg class="icon-sm"><use href="#ic-link"/></svg> Fetch
         </button>
       </div>
       <div id="fetchStatus" class="fetch-status hidden"></div>
-
-      <div class="field-row">
-        <div class="text-field flex-1">
+      <div class="field-row" style="margin-top:12px">
+        <div class="text-field" style="flex:1">
           <label class="field-label">Job Title</label>
           <input type="text" class="field-input" id="jobTitle"/>
         </div>
-        <div class="text-field flex-1">
+        <div class="text-field" style="flex:1">
           <label class="field-label">Company</label>
           <input type="text" class="field-input" id="jobCompany"/>
         </div>
       </div>
-
-      <div class="text-field">
+      <div class="text-field" style="margin-top:12px">
         <label class="field-label">Source</label>
         <input type="text" class="field-input" id="jobSource" placeholder="LinkedIn, Indeed, etc."/>
       </div>
-
       <div class="text-field" style="margin-top:16px">
         <label class="field-label">Notes for Tailoring</label>
-        <textarea class="field-textarea" id="jobNotesTailoring" placeholder="Expert advice for tailoring your resume to this role…" rows="4"></textarea>
+        <textarea class="field-textarea" id="jobNotesTailoring" rows="4" placeholder="Your expert notes for tailoring the resume to this role…"></textarea>
       </div>
     </div>
     <div class="modal-actions">
@@ -275,14 +246,12 @@
   </div>
 </div>
 
-<!-- Apply / Automate Modal -->
+<!-- Apply / Automate -->
 <div class="modal hidden" id="automateModal">
   <div class="modal-surface modal-sm">
     <div class="modal-header">
       <h2 class="modal-title">Apply with Workday</h2>
-      <button class="icon-btn modal-close" data-modal="automateModal">
-        <span class="material-symbols-outlined">close</span>
-      </button>
+      <button class="icon-btn" data-modal="automateModal"><svg class="icon"><use href="#ic-close"/></svg></button>
     </div>
     <div class="modal-body">
       <input type="hidden" id="automateJobId"/>
@@ -291,10 +260,8 @@
         <select class="field-select" id="automateLoginCred"></select>
       </div>
       <div class="text-field" style="margin-top:12px">
-        <label class="field-label">Account Setup Credentials (if no account exists)</label>
-        <select class="field-select" id="automateAccountCred">
-          <option value="">— None —</option>
-        </select>
+        <label class="field-label">Account Setup Credential (if no account exists)</label>
+        <select class="field-select" id="automateAccountCred"><option value="">— None —</option></select>
       </div>
     </div>
     <div class="modal-actions">
@@ -304,38 +271,15 @@
   </div>
 </div>
 
-<!-- Edit Job Status Modal -->
-<div class="modal hidden" id="statusModal">
-  <div class="modal-surface modal-sm">
-    <div class="modal-header">
-      <h2 class="modal-title">Update Status</h2>
-      <button class="icon-btn modal-close" data-modal="statusModal">
-        <span class="material-symbols-outlined">close</span>
-      </button>
-    </div>
-    <div class="modal-body">
-      <input type="hidden" id="statusJobId"/>
-      <p class="hint-text" style="margin-bottom:16px">Manually set the current stage for this application.</p>
-      <div class="status-chip-group" id="statusChips"></div>
-    </div>
-    <div class="modal-actions">
-      <button class="btn-text" data-modal="statusModal">Cancel</button>
-      <button class="btn-filled" id="saveStatusBtn">Save</button>
-    </div>
-  </div>
-</div>
-
-<!-- Base Resume Edit Modal -->
+<!-- Base Resume Edit -->
 <div class="modal hidden" id="baseResumeModal">
   <div class="modal-surface modal-lg">
     <div class="modal-header">
       <h2 class="modal-title">Edit Base Resume</h2>
-      <button class="icon-btn modal-close" data-modal="baseResumeModal">
-        <span class="material-symbols-outlined">close</span>
-      </button>
+      <button class="icon-btn" data-modal="baseResumeModal"><svg class="icon"><use href="#ic-close"/></svg></button>
     </div>
     <div class="modal-body">
-      <p class="hint-text" style="margin-bottom:12px">This is your master resume. Keep it complete — Claude will trim and tailor it per role.</p>
+      <p class="hint-text" style="margin-bottom:12px">Your master resume. Claude trims and tailors it per role — keep it complete.</p>
       <textarea class="field-textarea resume-textarea" id="baseResumeText" placeholder="Paste your full resume here…"></textarea>
     </div>
     <div class="modal-actions">
@@ -345,14 +289,12 @@
   </div>
 </div>
 
-<!-- View Tailored Resume Modal -->
+<!-- View Tailored Resume -->
 <div class="modal hidden" id="viewResumeModal">
   <div class="modal-surface modal-lg">
     <div class="modal-header">
       <h2 class="modal-title" id="viewResumeTitle">Tailored Resume</h2>
-      <button class="icon-btn modal-close" data-modal="viewResumeModal">
-        <span class="material-symbols-outlined">close</span>
-      </button>
+      <button class="icon-btn" data-modal="viewResumeModal"><svg class="icon"><use href="#ic-close"/></svg></button>
     </div>
     <div class="modal-body">
       <div id="viewResumeSummary" class="edit-summary hidden"></div>
@@ -360,79 +302,56 @@
     </div>
     <div class="modal-actions">
       <button class="btn-text" data-modal="viewResumeModal">Close</button>
-      <button class="btn-tonal" id="copyResumeBtn">
-        <span class="material-symbols-outlined">content_copy</span> Copy
-      </button>
+      <button class="btn-tonal" id="copyResumeBtn"><svg class="icon-sm"><use href="#ic-copy"/></svg> Copy</button>
     </div>
   </div>
 </div>
 
-<!-- Manual Tailor Modal -->
+<!-- Manual Tailor -->
 <div class="modal hidden" id="manualTailorModal">
   <div class="modal-surface modal-lg">
     <div class="modal-header">
       <h2 class="modal-title">Tailor Resume Manually</h2>
-      <button class="icon-btn modal-close" data-modal="manualTailorModal">
-        <span class="material-symbols-outlined">close</span>
-      </button>
+      <button class="icon-btn" data-modal="manualTailorModal"><svg class="icon"><use href="#ic-close"/></svg></button>
     </div>
     <div class="modal-body">
       <div class="field-row">
-        <div class="text-field flex-1">
-          <label class="field-label">Company (optional)</label>
-          <input type="text" class="field-input" id="mtCompany"/>
-        </div>
-        <div class="text-field flex-1">
-          <label class="field-label">Job Title (optional)</label>
-          <input type="text" class="field-input" id="mtTitle"/>
-        </div>
+        <div class="text-field" style="flex:1"><label class="field-label">Company</label><input type="text" class="field-input" id="mtCompany"/></div>
+        <div class="text-field" style="flex:1"><label class="field-label">Job Title</label><input type="text" class="field-input" id="mtTitle"/></div>
       </div>
       <div class="text-field" style="margin-top:12px">
         <label class="field-label">Job Description</label>
-        <textarea class="field-textarea" id="mtJobDesc" rows="6" placeholder="Paste the full job description here…"></textarea>
+        <textarea class="field-textarea" id="mtJobDesc" rows="6" placeholder="Paste the full job description…"></textarea>
       </div>
       <div class="text-field" style="margin-top:12px">
         <label class="field-label">Tailoring Notes</label>
-        <textarea class="field-textarea" id="mtNotes" rows="3" placeholder="Any specific expert notes…"></textarea>
+        <textarea class="field-textarea" id="mtNotes" rows="3" placeholder="Expert notes for tailoring…"></textarea>
       </div>
       <div id="mtStatus" class="fetch-status hidden" style="margin-top:12px"></div>
     </div>
     <div class="modal-actions">
       <button class="btn-text" data-modal="manualTailorModal">Cancel</button>
-      <button class="btn-filled" id="runManualTailorBtn">
-        <span class="material-symbols-outlined">auto_awesome</span> Tailor with Claude
-      </button>
+      <button class="btn-filled" id="runManualTailorBtn"><svg class="icon-sm"><use href="#ic-ai"/></svg> Tailor with Claude</button>
     </div>
   </div>
 </div>
 
-<!-- Login Credential Modal -->
+<!-- Login Credential -->
 <div class="modal hidden" id="loginCredModal">
   <div class="modal-surface modal-sm">
     <div class="modal-header">
       <h2 class="modal-title" id="loginCredModalTitle">Add Login Credential</h2>
-      <button class="icon-btn modal-close" data-modal="loginCredModal">
-        <span class="material-symbols-outlined">close</span>
-      </button>
+      <button class="icon-btn" data-modal="loginCredModal"><svg class="icon"><use href="#ic-close"/></svg></button>
     </div>
     <div class="modal-body">
       <input type="hidden" id="loginCredId"/>
-      <div class="text-field">
-        <label class="field-label">Label (e.g. "Gmail", "University Email")</label>
-        <input type="text" class="field-input" id="lcLabel"/>
-      </div>
+      <div class="text-field"><label class="field-label">Label (e.g. "Gmail", "UofT")</label><input type="text" class="field-input" id="lcLabel"/></div>
+      <div class="text-field" style="margin-top:12px"><label class="field-label">Email</label><input type="email" class="field-input" id="lcEmail"/></div>
       <div class="text-field" style="margin-top:12px">
-        <label class="field-label">Email</label>
-        <input type="email" class="field-input" id="lcEmail"/>
-      </div>
-      <div class="text-field" style="margin-top:12px">
-        <label class="field-label">Passwords to Try (one per line, tried top to bottom)</label>
+        <label class="field-label">Passwords to Try (one per line — tried top to bottom)</label>
         <textarea class="field-textarea" id="lcPasswords" rows="4" placeholder="password1&#10;password2&#10;password3"></textarea>
       </div>
-      <div class="text-field" style="margin-top:12px">
-        <label class="field-label">Priority (0 = try first)</label>
-        <input type="number" class="field-input" id="lcPriority" value="0" min="0"/>
-      </div>
+      <div class="text-field" style="margin-top:12px"><label class="field-label">Priority (0 = tried first)</label><input type="number" class="field-input" id="lcPriority" value="0" min="0"/></div>
     </div>
     <div class="modal-actions">
       <button class="btn-text" data-modal="loginCredModal">Cancel</button>
@@ -441,29 +360,18 @@
   </div>
 </div>
 
-<!-- Account Credential Modal -->
+<!-- Account Credential -->
 <div class="modal hidden" id="accountCredModal">
   <div class="modal-surface modal-sm">
     <div class="modal-header">
-      <h2 class="modal-title" id="accountCredModalTitle">Add Account Setup Credential</h2>
-      <button class="icon-btn modal-close" data-modal="accountCredModal">
-        <span class="material-symbols-outlined">close</span>
-      </button>
+      <h2 class="modal-title" id="accountCredModalTitle">Add Account Credential</h2>
+      <button class="icon-btn" data-modal="accountCredModal"><svg class="icon"><use href="#ic-close"/></svg></button>
     </div>
     <div class="modal-body">
       <input type="hidden" id="accountCredId"/>
-      <div class="text-field">
-        <label class="field-label">Label</label>
-        <input type="text" class="field-input" id="acLabel"/>
-      </div>
-      <div class="text-field" style="margin-top:12px">
-        <label class="field-label">Email</label>
-        <input type="email" class="field-input" id="acEmail"/>
-      </div>
-      <div class="text-field" style="margin-top:12px">
-        <label class="field-label">Password</label>
-        <input type="password" class="field-input" id="acPassword"/>
-      </div>
+      <div class="text-field"><label class="field-label">Label</label><input type="text" class="field-input" id="acLabel"/></div>
+      <div class="text-field" style="margin-top:12px"><label class="field-label">Email</label><input type="email" class="field-input" id="acEmail"/></div>
+      <div class="text-field" style="margin-top:12px"><label class="field-label">Password</label><input type="password" class="field-input" id="acPassword"/></div>
     </div>
     <div class="modal-actions">
       <button class="btn-text" data-modal="accountCredModal">Cancel</button>
