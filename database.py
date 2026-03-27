@@ -17,6 +17,6 @@ async def get_db():
 
 
 async def init_db():
-    from models import Job, CoffeeChat, EmailOutreach, ApplicationAnswer, CompanyPassword, Notification, Resume  # noqa
+    from models import Job, ApplicationAnswer, LoginCredential, AccountCredential, Notification, Resume  # noqa
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

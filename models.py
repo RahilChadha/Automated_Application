@@ -1,6 +1,6 @@
 from datetime import datetime
-from sqlalchemy import String, Text, DateTime, Boolean, Integer, ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import String, Text, DateTime, Boolean, Integer
+from sqlalchemy.orm import Mapped, mapped_column
 from database import Base
 
 
@@ -11,46 +11,14 @@ class Job(Base):
     company: Mapped[str] = mapped_column(String(200))
     title: Mapped[str] = mapped_column(String(200))
     url: Mapped[str | None] = mapped_column(Text, nullable=True)
-    workday_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Statuses: to_apply | applied | round_1 | round_2 | round_3 | offer
     status: Mapped[str] = mapped_column(String(50), default="to_apply")
-    salary: Mapped[str | None] = mapped_column(String(100), nullable=True)
-    location: Mapped[str | None] = mapped_column(String(200), nullable=True)
     source: Mapped[str | None] = mapped_column(String(100), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
-    tailored_resume: Mapped[str | None] = mapped_column(Text, nullable=True)
+    notes_for_tailoring: Mapped[str | None] = mapped_column(Text, nullable=True)
+    scraped_description: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     applied_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-
-
-class CoffeeChat(Base):
-    __tablename__ = "coffee_chats"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    name: Mapped[str] = mapped_column(String(200))
-    company: Mapped[str] = mapped_column(String(200))
-    role: Mapped[str | None] = mapped_column(String(200), nullable=True)
-    linkedin_url: Mapped[str | None] = mapped_column(Text, nullable=True)
-    status: Mapped[str] = mapped_column(String(50), default="to_reach_out")
-    follow_up_date: Mapped[str | None] = mapped_column(String(20), nullable=True)
-    meeting_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
-    next_action: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-
-
-class EmailOutreach(Base):
-    __tablename__ = "email_outreach"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    name: Mapped[str] = mapped_column(String(200))
-    company: Mapped[str] = mapped_column(String(200))
-    role: Mapped[str | None] = mapped_column(String(200), nullable=True)
-    email: Mapped[str | None] = mapped_column(String(200), nullable=True)
-    subject: Mapped[str | None] = mapped_column(Text, nullable=True)
-    body: Mapped[str | None] = mapped_column(Text, nullable=True)
-    status: Mapped[str] = mapped_column(String(50), default="to_send")
-    follow_up_date: Mapped[str | None] = mapped_column(String(20), nullable=True)
-    sent_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
 class ApplicationAnswer(Base):
@@ -63,12 +31,26 @@ class ApplicationAnswer(Base):
     category: Mapped[str] = mapped_column(String(100), default="General")
 
 
-class CompanyPassword(Base):
-    __tablename__ = "company_passwords"
+class LoginCredential(Base):
+    """Email + ordered list of passwords to try when logging in to Workday."""
+    __tablename__ = "login_credentials"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    company_name: Mapped[str] = mapped_column(String(200))
-    workday_url_pattern: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    label: Mapped[str] = mapped_column(String(200))          # e.g. "Gmail"
+    email: Mapped[str] = mapped_column(String(200))
+    # Fernet-encrypted JSON list of passwords, tried in order
+    encrypted_passwords_json: Mapped[str] = mapped_column(Text)
+    priority: Mapped[int] = mapped_column(Integer, default=0)  # 0 = try first
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class AccountCredential(Base):
+    """Email + password used when creating a new Workday account."""
+    __tablename__ = "account_credentials"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    label: Mapped[str] = mapped_column(String(200))
+    email: Mapped[str] = mapped_column(String(200))
     encrypted_password: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
@@ -79,7 +61,7 @@ class Notification(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     title: Mapped[str] = mapped_column(String(300))
     message: Mapped[str] = mapped_column(Text)
-    type: Mapped[str] = mapped_column(String(50), default="info")  # info, warning, error, success
+    type: Mapped[str] = mapped_column(String(50), default="info")  # info|warning|error|success
     read: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
@@ -91,5 +73,8 @@ class Resume(Base):
     content: Mapped[str] = mapped_column(Text)
     is_base: Mapped[bool] = mapped_column(Boolean, default=False)
     job_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    job_company: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    job_title: Mapped[str | None] = mapped_column(String(200), nullable=True)
     label: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    edit_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

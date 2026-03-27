@@ -1,31 +1,21 @@
 """
 Workday automation using Playwright.
 
-Flow:
-1. Navigate to the job's Workday URL
-2. Click "Apply" / "Apply with Workday"
-3. Check if user has an account → try login with stored password
-   - Wrong password → create notification, abort
-   - No account → auto-create one with profile answers
-4. Fill application form from saved ApplicationAnswer records
-5. Leave browser open for user to review and submit
+Login flow:
+  1. Navigate to the job URL, find and click Apply
+  2. Try each login credential (email + password list) in priority order
+  3. If all logins fail → try account creation with account_credential
+  4. Auto-fill form fields from saved profile answers
+  5. Leave browser open for user to review and submit
 """
 
 import asyncio
-import re
-from typing import Optional
-
-from playwright.async_api import async_playwright, Page, Browser, BrowserContext
+from playwright.async_api import async_playwright, Page, Browser
 
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 
-def _extract_domain(url: str) -> str:
-    match = re.search(r"https?://([^/]+)", url)
-    return match.group(1) if match else url
-
-
-async def _fill_if_present(page: Page, selector: str, value: str):
+async def _fill(page: Page, selector: str, value: str):
     try:
         el = page.locator(selector).first
         if await el.count() > 0:
@@ -34,192 +24,208 @@ async def _fill_if_present(page: Page, selector: str, value: str):
         pass
 
 
-# ─── Main entry point ─────────────────────────────────────────────────────────
+async def _click(page: Page, selector: str) -> bool:
+    try:
+        el = page.locator(selector).first
+        if await el.count() > 0:
+            await el.click()
+            return True
+    except Exception:
+        pass
+    return False
+
+
+async def _page_contains(page: Page, *phrases: str) -> bool:
+    try:
+        text = (await page.content()).lower()
+        return any(p.lower() in text for p in phrases)
+    except Exception:
+        return False
+
+
+# ─── Main entry ───────────────────────────────────────────────────────────────
 
 async def run_workday_automation(
     job_id: int,
-    workday_url: str,
-    email: str,
-    password: str,
+    job_url: str,
+    login_credentials: list[dict],    # [{"email": ..., "passwords": [...]}, ...]
+    account_credential: dict | None,  # {"email": ..., "password": ...}
     profile: dict,
-    notify_callback,          # async callable(title, message, type)
+    notify_callback,
 ) -> dict:
-    """
-    Returns {"status": "opened_for_review" | "wrong_password" | "error", "message": str}
-    """
     try:
         async with async_playwright() as p:
-            browser: Browser = await p.chromium.launch(headless=False, slow_mo=100)
-            context: BrowserContext = await browser.new_context()
+            browser: Browser = await p.chromium.launch(headless=False, slow_mo=80)
+            context = await browser.new_context()
             page: Page = await context.new_page()
 
-            await page.goto(workday_url, wait_until="domcontentloaded", timeout=30000)
+            await page.goto(job_url, wait_until="domcontentloaded", timeout=30000)
+            await page.wait_for_timeout(2000)
 
-            # ── Step 1: Find and click Apply button ──────────────────────────
+            # ── Step 1: Click Apply ──────────────────────────────────────────
             apply_clicked = False
-            for selector in [
-                "button:has-text('Apply')",
-                "a:has-text('Apply')",
+            for sel in [
+                "button:has-text('Apply Now')", "a:has-text('Apply Now')",
+                "button:has-text('Apply')", "a:has-text('Apply')",
                 "[data-automation-id='applyButton']",
-                "button:has-text('Apply Now')",
-                "a:has-text('Apply Now')",
+                "[aria-label*='Apply' i]",
             ]:
-                try:
-                    btn = page.locator(selector).first
-                    if await btn.count() > 0:
-                        await btn.click()
-                        apply_clicked = True
-                        break
-                except Exception:
-                    continue
+                if await _click(page, sel):
+                    apply_clicked = True
+                    break
 
             if not apply_clicked:
                 await notify_callback(
                     "Apply Button Not Found",
-                    f"Could not find an Apply button on {workday_url}. Please apply manually.",
+                    f"Could not find an Apply button on the job page. Please apply manually.",
                     "warning",
                 )
+                await asyncio.sleep(300)
                 return {"status": "error", "message": "Apply button not found"}
 
-            await page.wait_for_timeout(2000)
+            await page.wait_for_timeout(3000)
 
-            # ── Step 2: Detect Sign In vs Create Account ──────────────────────
-            page_text = (await page.content()).lower()
+            # ── Step 2: Try login credentials in order ───────────────────────
+            logged_in = False
+            for cred in login_credentials:
+                email = cred["email"]
+                passwords = cred["passwords"]
 
-            if "sign in" in page_text or "email" in page_text:
-                result = await _attempt_login(page, email, password, profile, notify_callback)
-            else:
-                result = {"status": "opened_for_review", "message": "Browser opened. Please review and submit."}
+                result = await _try_login(page, email, passwords, notify_callback)
+                if result == "success":
+                    logged_in = True
+                    break
+                elif result == "no_account":
+                    await notify_callback(
+                        "No Account Found",
+                        f"No Workday account exists for {email}. Trying next credential.",
+                        "info",
+                    )
+                    # Navigate back to try next credential
+                    await page.goto(job_url, wait_until="domcontentloaded", timeout=30000)
+                    await page.wait_for_timeout(2000)
+                    for sel in ["button:has-text('Apply Now')", "button:has-text('Apply')", "[data-automation-id='applyButton']"]:
+                        if await _click(page, sel):
+                            break
+                    await page.wait_for_timeout(2500)
+                elif result == "wrong_password":
+                    await notify_callback(
+                        "Wrong Password",
+                        f"All passwords failed for {email}. Update them in Job Setup → Passwords.",
+                        "warning",
+                    )
 
-            if result["status"] == "logged_in":
+            # ── Step 3: Account creation fallback ────────────────────────────
+            if not logged_in:
+                if account_credential:
+                    ac_result = await _create_account(
+                        page, account_credential["email"],
+                        account_credential["password"], profile, notify_callback
+                    )
+                    logged_in = ac_result == "success"
+                else:
+                    await notify_callback(
+                        "Login Failed",
+                        "All login attempts failed and no account creation credentials are saved. "
+                        "Add Account Setup credentials in Job Setup → Passwords.",
+                        "error",
+                    )
+                    await asyncio.sleep(300)
+                    return {"status": "error", "message": "Login failed"}
+
+            # ── Step 4: Fill form ────────────────────────────────────────────
+            if logged_in:
+                await page.wait_for_timeout(2000)
                 await _fill_application_form(page, profile)
                 await notify_callback(
                     "Application Ready",
-                    f"Form pre-filled. Please review and submit in the browser window.",
+                    "Form pre-filled! Review everything in the browser window and click Submit.",
                     "success",
                 )
-                # Keep browser open — user submits manually
-                await asyncio.sleep(600)  # 10 min window
-                return {"status": "opened_for_review", "message": "Browser opened for review."}
+                await asyncio.sleep(600)  # Keep browser open 10 min
 
-            return result
+            return {"status": "opened_for_review"}
 
     except Exception as exc:
         await notify_callback("Automation Error", str(exc), "error")
         return {"status": "error", "message": str(exc)}
 
 
-# ─── Login flow ───────────────────────────────────────────────────────────────
+# ─── Login attempt ────────────────────────────────────────────────────────────
 
-async def _attempt_login(
-    page: Page,
-    email: str,
-    password: str,
-    profile: dict,
-    notify_callback,
-) -> dict:
-    # Fill email
-    await _fill_if_present(page, "input[type='email']", email)
-    await _fill_if_present(page, "input[placeholder*='Email' i]", email)
-    await _fill_if_present(page, "[data-automation-id='email']", email)
+async def _try_login(page: Page, email: str, passwords: list[str], notify_callback) -> str:
+    """Returns: 'success' | 'wrong_password' | 'no_account'"""
 
-    # Click Next / Continue if present
+    # Enter email
+    await _fill(page, "input[type='email']", email)
+    await _fill(page, "[data-automation-id='email']", email)
+    await _fill(page, "input[placeholder*='email' i]", email)
+
     for sel in ["button:has-text('Next')", "button:has-text('Continue')", "button[type='submit']"]:
-        try:
-            btn = page.locator(sel).first
-            if await btn.count() > 0:
-                await btn.click()
-                await page.wait_for_timeout(1500)
+        if await _click(page, sel):
+            break
+    await page.wait_for_timeout(2000)
+
+    # Check if "Create Account" appeared → no account for this email
+    if await _page_contains(page, "create account", "sign up", "register", "create an account"):
+        return "no_account"
+
+    # Try each password
+    for pw in passwords:
+        await _fill(page, "input[type='password']", pw)
+        await _fill(page, "[data-automation-id='password']", pw)
+
+        for sel in ["button:has-text('Sign In')", "button:has-text('Log In')", "button:has-text('Sign in')", "button[type='submit']"]:
+            if await _click(page, sel):
                 break
-        except Exception:
-            pass
+        await page.wait_for_timeout(2500)
 
-    # Check if "Create Account" appeared (no account exists)
-    content = (await page.content()).lower()
-    if "create account" in content or "create an account" in content or "sign up" in content:
-        await notify_callback(
-            "New Workday Account Created",
-            f"No account found for {email}. Creating a new Workday account automatically.",
-            "info",
-        )
-        return await _create_account(page, email, password, profile, notify_callback)
+        # Check for error
+        if await _page_contains(page, "incorrect password", "invalid password", "wrong password",
+                                "incorrect credentials", "sign in failed", "authentication failed"):
+            continue  # Try next password
 
-    # Fill password
-    await _fill_if_present(page, "input[type='password']", password)
-    await _fill_if_present(page, "[data-automation-id='password']", password)
+        # Check for success indicators
+        if await _page_contains(page, "my applications", "dashboard", "welcome", "profile",
+                                "my account", "submit", "review"):
+            await notify_callback("Logged In", f"Successfully logged in as {email}.", "success")
+            return "success"
 
-    for sel in ["button:has-text('Sign In')", "button:has-text('Log In')", "button[type='submit']"]:
-        try:
-            btn = page.locator(sel).first
-            if await btn.count() > 0:
-                await btn.click()
-                await page.wait_for_timeout(2500)
-                break
-        except Exception:
-            pass
-
-    # Check for wrong password error
-    content = (await page.content()).lower()
-    if "incorrect" in content or "invalid" in content or "wrong" in content or "error" in content:
-        await notify_callback(
-            "Wrong Workday Password",
-            f"The password stored for this company appears to be incorrect. "
-            f"Go to Job Setup → Passwords and update it.",
-            "warning",
-        )
-        return {"status": "wrong_password", "message": "Wrong password — please update in Job Setup → Passwords."}
-
-    return {"status": "logged_in", "message": "Logged in successfully."}
+    return "wrong_password"
 
 
-# ─── Account creation flow ────────────────────────────────────────────────────
+# ─── Account creation ─────────────────────────────────────────────────────────
 
-async def _create_account(
-    page: Page,
-    email: str,
-    password: str,
-    profile: dict,
-    notify_callback,
-) -> dict:
-    # Click "Create Account" link/button
-    for sel in ["button:has-text('Create Account')", "a:has-text('Create Account')", "button:has-text('Sign Up')"]:
-        try:
-            btn = page.locator(sel).first
-            if await btn.count() > 0:
-                await btn.click()
-                await page.wait_for_timeout(1500)
-                break
-        except Exception:
-            pass
+async def _create_account(page: Page, email: str, password: str, profile: dict, notify_callback) -> str:
+    for sel in ["button:has-text('Create Account')", "a:has-text('Create Account')",
+                "button:has-text('Sign Up')", "a:has-text('Sign Up')"]:
+        if await _click(page, sel):
+            break
+    await page.wait_for_timeout(1500)
 
-    await _fill_if_present(page, "input[type='email']", email)
-    await _fill_if_present(page, "input[placeholder*='First' i]", profile.get("first_name", ""))
-    await _fill_if_present(page, "input[placeholder*='Last' i]", profile.get("last_name", ""))
-    await _fill_if_present(page, "input[type='password']", password)
-    await _fill_if_present(page, "input[placeholder*='Confirm' i]", password)
+    await _fill(page, "input[type='email']", email)
+    await _fill(page, "input[placeholder*='First' i]", profile.get("first_name", ""))
+    await _fill(page, "input[placeholder*='Last' i]", profile.get("last_name", ""))
+    await _fill(page, "input[type='password']", password)
+    await _fill(page, "input[placeholder*='Confirm' i]", password)
+    await _fill(page, "input[placeholder*='confirm' i]", password)
 
     for sel in ["button:has-text('Create')", "button:has-text('Submit')", "button[type='submit']"]:
-        try:
-            btn = page.locator(sel).first
-            if await btn.count() > 0:
-                await btn.click()
-                await page.wait_for_timeout(2000)
-                break
-        except Exception:
-            pass
+        if await _click(page, sel):
+            break
+    await page.wait_for_timeout(2500)
 
     await notify_callback(
-        "Workday Account Created",
-        f"New Workday account created for {email}. Continuing with application.",
+        "New Account Created",
+        f"Workday account created for {email}. Continuing application.",
         "success",
     )
-    return {"status": "logged_in", "message": "Account created and logged in."}
+    return "success"
 
 
 # ─── Form filling ─────────────────────────────────────────────────────────────
 
 async def _fill_application_form(page: Page, profile: dict):
-    """Best-effort auto-fill of common Workday application fields."""
     mapping = {
         "[data-automation-id='legalNameSection_firstName']": profile.get("first_name", ""),
         "[data-automation-id='legalNameSection_lastName']": profile.get("last_name", ""),
@@ -231,9 +237,10 @@ async def _fill_application_form(page: Page, profile: dict):
         "input[placeholder*='GitHub' i]": profile.get("github_url", ""),
         "input[placeholder*='Website' i]": profile.get("website_url", ""),
         "input[placeholder*='GPA' i]": profile.get("gpa", ""),
+        "input[placeholder*='University' i]": profile.get("school", ""),
+        "input[placeholder*='School' i]": profile.get("school", ""),
     }
-
-    for selector, value in mapping.items():
-        if value:
-            await _fill_if_present(page, selector, value)
-            await page.wait_for_timeout(200)
+    for sel, val in mapping.items():
+        if val:
+            await _fill(page, sel, val)
+            await page.wait_for_timeout(150)
